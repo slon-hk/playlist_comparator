@@ -100,8 +100,8 @@
         }
 
         .track-list {
-            list-style: none;
-            padding-left: 0;
+            list-style: decimal;
+            padding-left: 25px;  /* Add padding for numbers */
         }
 
         .track-list li {
@@ -112,12 +112,54 @@
         .track-list li:last-child {
             border-bottom: none;
         }
+
+        .warning {
+            text-align: justify;
+            text-justify: inter-word;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        .collapsible {
+            background-color: #1db954;
+            color: white;
+            cursor: pointer;
+            padding: 10px;
+            width: 100%;
+            border: none;
+            text-align: left;
+            outline: none;
+            font-size: 15px;
+            border-radius: 6px;
+            margin: 5px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .collapsible:after {
+            content: '+';
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .active:after {
+            content: '-';
+        }
+
+        .content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+            background-color: #f9f9f9;
+            border-radius: 0 0 6px 6px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Анализатор совместимости плейлистов</h1>
-
+        <p class="warning">Перед использованием убедитесь, что плелист открыт(не приватный) и пожалуйста ждите ответа, сервер думает долго, но упорно(сайт запущен на тапке) </p>
         <form onsubmit="comparePlaylists(); return false;" style="display: flex; flex-direction: column; align-items: center;">
             <label for="playlist1">Ссылка на плейлист(Spotify/Yandex Music):</label>
             <input type="url" id="playlist1" name="playlist1" placeholder="https://open.spotify.com/playlist/...">
@@ -184,23 +226,46 @@
                 htmlResult += `<p>Плейлист 1: ${data.playlist1_track_count} треков. Плейлист 2: ${data.playlist2_track_count} треков.</p>`;
                 htmlResult += `<p>Общих треков: ${data.common_tracks_count}</p>`;
                 
+                // For tracks list
                 if (data.common_tracks_details && data.common_tracks_details.length > 0) {
-                    htmlResult += `<h3>Общие треки:</h3><ul class="track-list">`;
-                    data.common_tracks_details.forEach(track => {
-                        htmlResult += `<li>${track.name} - ${track.artists.join(', ')}</li>`;
-                    });
-                    htmlResult += `</ul>`;
+                    htmlResult += `
+        <button type="button" class="collapsible">Общие треки (${data.common_tracks_count})</button>
+        <div class="content" style="padding: 10px;">
+            <ol type="1" class="track-list">
+                ${data.common_tracks_details.map(track => 
+                    `<li>${track.name} - ${track.artists.join(', ')}</li>`
+                ).join('')}
+            </ol>
+        </div>`;
                 }
 
                 htmlResult += `<p>Общих исполнителей: ${data.common_artists_count}</p>`;
+                // For artists list
                 if (data.common_artists_details && data.common_artists_details.length > 0) {
-                    htmlResult += `<h3>Общие исполнители:</h3><ul class="track-list">`;
-                    data.common_artists_details.forEach(artist => {
-                        htmlResult += `<li>${artist}</li>`;
-                    });
-                    htmlResult += `</ul>`;
+                    htmlResult += `
+        <button type="button" class="collapsible">Общие исполнители (${data.common_artists_count})</button>
+        <div class="content" style="padding: 10px;">
+            <ol type="1" class="track-list">
+                ${data.common_artists_details.map(artist => 
+                    `<li>${artist}</li>`
+                ).join('')}
+            </ol>
+        </div>`;
                 }
                 resultsDiv.innerHTML = htmlResult;
+
+                // Add event listeners for new collapsible elements
+                resultsDiv.querySelectorAll('.collapsible').forEach(button => {
+                    button.addEventListener('click', function() {
+                        this.classList.toggle('active');
+                        const content = this.nextElementSibling;
+                        if (content.style.maxHeight) {
+                            content.style.maxHeight = null;
+                        } else {
+                            content.style.maxHeight = content.scrollHeight + "px";
+                        }
+                    });
+                });
 
             } catch (error) {
                 loader.style.display = 'none'; // Скрыть индикатор загрузки

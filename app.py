@@ -185,9 +185,9 @@ def compare():
         return jsonify({'error': 'Не переданы оба URL плейлистов'}), 400
 
     def detect_platform(url):
-        if "spotify.com" in url:
+        if "spotify" in url:
             return "spotify"
-        elif "yandex.ru" in url:
+        elif "yandex" in url:
             return "yandex"
         else:
             return "unknown"
