@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Сравнение плейлистов</title>
     <style>
         body {
@@ -89,8 +89,12 @@
         }
 
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
         }
 
         .error {
@@ -101,7 +105,7 @@
 
         .track-list {
             list-style: decimal;
-            padding-left: 25px;  /* Add padding for numbers */
+            padding-left: 25px;
         }
 
         .track-list li {
@@ -154,25 +158,190 @@
             background-color: #f9f9f9;
             border-radius: 0 0 6px 6px;
         }
+
+        /* Share button styles */
+        #shareButton {
+            background-color: #1a73e8;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+
+        /* Modal styles */
+        #shareModal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0, 0, 0, 0.6);
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        #shareModalContent {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 400px;
+            width: 90%;
+            box-sizing: border-box;
+            text-align: left;
+        }
+
+        #shareModalContent label {
+            margin-top: 10px;
+            display: block;
+            font-weight: 600;
+        }
+
+        #shareModalContent input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        #shareModalContent button {
+            margin-top: 15px;
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        #shareCreateBtn {
+            background-color: #1a73e8;
+            color: white;
+            margin-right: 10px;
+        }
+
+        #shareCancelBtn {
+            background-color: #ccc;
+            color: black;
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .container {
+                max-width: 95%;
+                padding: 15px;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            button, #shareModalContent button {
+                font-size: 14px;
+                padding: 8px 15px;
+            }
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgb(0,0,0);
+            background-color: rgba(0,0,0,0.4);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+            border-radius: 10px;
+            position: relative;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Анализатор совместимости плейлистов</h1>
-        <p class="warning">Перед использованием убедитесь, что плелист открыт(не приватный) и пожалуйста ждите ответа, сервер думает долго, но упорно(сайт запущен на тапке) </p>
+        <p class="warning">Перед использованием убедитесь, что плейлист открыт (не приватный) и пожалуйста ждите ответа, сервер думает долго, но упорно (сайт запущен на тапке)</p>
         <form onsubmit="comparePlaylists(); return false;" style="display: flex; flex-direction: column; align-items: center;">
-            <label for="playlist1">Ссылка на плейлист(Spotify/Yandex Music):</label>
-            <input type="url" id="playlist1" name="playlist1" placeholder="https://open.spotify.com/playlist/...">
+            <label for="playlist1">Ссылка на плейлист (Spotify/Yandex Music):</label>
+            <input type="url" id="playlist1" name="playlist1" placeholder="https://open.spotify.com/playlist/..." />
 
-            <label for="playlist2">Ссылка на плейлист(Spotify/Yandex Music):</label>
-            <input type="url" id="playlist2" name="playlist2" placeholder="https://open.spotify.com/playlist/...">
+            <label for="playlist2">Ссылка на плейлист (Spotify/Yandex Music):</label>
+            <input type="url" id="playlist2" name="playlist2" placeholder="https://open.spotify.com/playlist/..." />
 
             <button type="submit">Сравнить</button>
         </form>
 
         <div class="loader" id="loader"></div>
         <div id="results"></div>
+
+        <button id="shareButton" onclick="openShareModal()" style="display:none;">Поделиться результатом</button>
+
         <p>Разработчик: <a href="https://github.com/slon-hk">@slon_hk</a></p>
+    </div>
+
+    <!-- Модальное окно для ввода имён -->
+    <div id="shareModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeShareModal()">&times;</span>
+            <h2>Поделиться результатом</h2>
+            <div class="form-group">
+                <label for="shareName1">Имя первого человека:</label>
+                <input type="text" id="shareName1" required>
+            </div>
+            <div class="form-group">
+                <label for="shareName2">Имя второго человека:</label>
+                <input type="text" id="shareName2" required>
+            </div>
+            <button onclick="generateShareImage()">Создать изображение</button>
+        </div>
     </div>
 
     <script>
@@ -181,15 +350,17 @@
             const playlist2Url = document.getElementById('playlist2').value;
             const resultsDiv = document.getElementById('results');
             const loader = document.getElementById('loader');
+            const shareBtn = document.getElementById('shareButton');
 
-            resultsDiv.innerHTML = ''; // Очистить предыдущие результаты
-            
+            resultsDiv.innerHTML = '';
+            shareBtn.style.display = 'none';
+
             if (!playlist1Url || !playlist2Url) {
                 resultsDiv.innerHTML = '<p class="error">Пожалуйста, введите URL обоих плейлистов.</p>';
                 return;
             }
 
-            loader.style.display = 'block'; // Показать индикатор загрузки
+            loader.style.display = 'block';
 
             try {
                 const response = await fetch('/api/compare', {
@@ -203,7 +374,7 @@
                     }),
                 });
 
-                loader.style.display = 'none'; // Скрыть индикатор загрузки
+                loader.style.display = 'none';
 
                 if (!response.ok) {
                     const errorData = await response.json();
@@ -212,65 +383,130 @@
                 }
 
                 const data = await response.json();
-                
-                if (data.error) {
-                     resultsDiv.innerHTML = `<p class="error">Ошибка: ${data.error}</p>`;
-                     return;
-                }
+                // Сохраняем данные сравнения глобально
+                window.comparisonData = data;
 
                 let htmlResult = `<h2>Результаты сравнения:</h2>`;
                 htmlResult += `<p><strong>Общая совместимость: ${data.percentage}%</strong></p>`;
-                 if (data.message) {
+                if (data.message) {
                     htmlResult += `<p><em>${data.message}</em></p>`;
                 }
                 htmlResult += `<p>Плейлист 1: ${data.playlist1_track_count} треков. Плейлист 2: ${data.playlist2_track_count} треков.</p>`;
                 htmlResult += `<p>Общих треков: ${data.common_tracks_count}</p>`;
-                
-                // For tracks list
+
                 if (data.common_tracks_details && data.common_tracks_details.length > 0) {
-                    htmlResult += `
-        <button type="button" class="collapsible">Общие треки (${data.common_tracks_count})</button>
-        <div class="content" style="padding: 10px;">
-            <ol type="1" class="track-list">
-                ${data.common_tracks_details.map(track => 
-                    `<li>${track.name} - ${track.artists.join(', ')}</li>`
-                ).join('')}
-            </ol>
-        </div>`;
+                    htmlResult +=
+                        `<button type="button" class="collapsible">Общие треки (${data.common_tracks_count})</button>` +
+                        `<div class="content" style="padding: 10px;">` +
+                        `<ol type="1" class="track-list">` +
+                        data.common_tracks_details
+                            .map(
+                                (track) =>
+                                    `<li>${track.name} - ${track.artists.join(', ')}</li>`
+                            )
+                            .join('') +
+                        `</ol></div>`;
                 }
 
                 htmlResult += `<p>Общих исполнителей: ${data.common_artists_count}</p>`;
-                // For artists list
+
                 if (data.common_artists_details && data.common_artists_details.length > 0) {
-                    htmlResult += `
-        <button type="button" class="collapsible">Общие исполнители (${data.common_artists_count})</button>
-        <div class="content" style="padding: 10px;">
-            <ol type="1" class="track-list">
-                ${data.common_artists_details.map(artist => 
-                    `<li>${artist}</li>`
-                ).join('')}
-            </ol>
-        </div>`;
+                    htmlResult +=
+                        `<button type="button" class="collapsible">Общие исполнители (${data.common_artists_count})</button>` +
+                        `<div class="content" style="padding: 10px;">` +
+                        `<ol type="1" class="track-list">` +
+                        data.common_artists_details
+                            .map((artist) => `<li>${artist}</li>`)
+                            .join('') +
+                        `</ol></div>`;
                 }
+
                 resultsDiv.innerHTML = htmlResult;
 
-                // Add event listeners for new collapsible elements
-                resultsDiv.querySelectorAll('.collapsible').forEach(button => {
-                    button.addEventListener('click', function() {
+                // Показать кнопку «Поделиться» только если есть результат
+                shareBtn.style.display = 'inline-block';
+
+                // Коллапс для списков
+                resultsDiv.querySelectorAll('.collapsible').forEach((button) => {
+                    button.addEventListener('click', function () {
                         this.classList.toggle('active');
                         const content = this.nextElementSibling;
                         if (content.style.maxHeight) {
                             content.style.maxHeight = null;
                         } else {
-                            content.style.maxHeight = content.scrollHeight + "px";
+                            content.style.maxHeight = content.scrollHeight + 'px';
                         }
                     });
                 });
-
             } catch (error) {
-                loader.style.display = 'none'; // Скрыть индикатор загрузки
+                loader.style.display = 'none';
                 resultsDiv.innerHTML = `<p class="error">Сетевая ошибка или проблема с запросом: ${error.message}</p>`;
                 console.error('Fetch error:', error);
+            }
+        }
+
+        function openShareModal() {
+            document.getElementById('shareModal').style.display = 'flex';
+        }
+
+        function closeShareModal() {
+            document.getElementById('shareModal').style.display = 'none';
+        }
+
+        async function generateShareImage() {
+            const name1 = document.getElementById('shareName1').value.trim();
+            const name2 = document.getElementById('shareName2').value.trim();
+            
+            // Получаем процент из сохраненных данных сравнения
+            const percentage = window.comparisonData ? window.comparisonData.percentage : 0;
+            
+            if (!name1 || !name2) {
+                alert('Пожалуйста, введите оба имени.');
+                return;
+            }
+
+            // Get stored comparison data
+            const playlist1Url = document.getElementById('playlist1').value;
+            const playlist2Url = document.getElementById('playlist2').value;
+            
+            if (!window.comparisonData) {
+                alert('Пожалуйста, сначала выполните сравнение плейлистов.');
+                return;
+            }
+            
+            // Store the comparison data when received
+            const shareData = {
+                name1: name1,
+                name2: name2,
+                percentage: percentage,
+                playlist1_url: playlist1Url,
+                playlist2_url: playlist2Url
+            };
+
+            try {
+                const response = await fetch('/api/share-image', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(shareData),
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Ошибка при создании изображения');
+                }
+
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `share_${name1}_${name2}.jpg`;
+                link.click();
+
+                closeShareModal();
+            } catch (e) {
+                console.error(e);
+                alert(e.message);
             }
         }
     </script>

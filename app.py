@@ -2,7 +2,8 @@ import os
 import logging
 from urllib.parse import urlparse
 
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, send_file
+from image_generator import generate_image
 from dotenv import load_dotenv
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
@@ -18,6 +19,7 @@ logging.basicConfig(
     ]
 )
 app = Flask(__name__)
+comparison_cache = {}  # Для хранения результатов сравнения
 
 # --- Spotify Setup ---
 client_id = os.getenv("SPOTIPY_CLIENT_ID")
@@ -98,6 +100,43 @@ def fetch_yandex_tracks(url: str):
     return tracks
 
 # --- Сравнение ---
+def get_top_artists(tracks, limit=5):
+    """
+    Подсчитывает частоту встречаемости исполнителей и возвращает топ самых частых
+    
+    Args:
+        tracks (list): Список треков, где каждый трек - словарь с ключом 'artists'
+        limit (int): Количество исполнителей для возврата
+    
+    Returns:
+        list: Список кортежей (исполнитель, количество появлений)
+    """
+    artist_counts = {}
+    
+    for track in tracks:
+        if isinstance(track, dict) and 'artists' in track:
+            for artist in track['artists']:
+                if isinstance(artist, str):
+                    artist = artist.lower().strip()
+                    artist_counts[artist] = artist_counts.get(artist, 0) + 1
+    
+    # Сортируем по убыванию количества и берем топ limit
+    sorted_artists = sorted(artist_counts.items(), key=lambda x: (-x[1], x[0]))[:limit]
+    return sorted_artists
+
+def get_top_artists_from_common_tracks(common_tracks, limit=5):
+    artist_counts = {}
+    
+    for track in common_tracks:
+        artists = track.split(' - ')[0].split(' & ')
+        for artist in artists:
+            artist = artist.lower().strip()
+            artist_counts[artist] = artist_counts.get(artist, 0) + 1
+    
+    # Сортируем по убыванию количества и берем топ limit
+    sorted_artists = sorted(artist_counts.items(), key=lambda x: (-x[1], x[0]))[:limit]
+    return sorted_artists
+
 def calculate_compatibility(tracks1, tracks2):
     if not tracks1 or not tracks2:
         return {
@@ -122,7 +161,7 @@ def calculate_compatibility(tracks1, tracks2):
             
         return (normalize(title), tuple(sorted(map(normalize, artists))))
 
-    # Фильтруем невалидные треки
+    # Фильтруем невалидные треки и создаем множества
     valid_tracks1 = [t for t in (process_track(track) for track in tracks1) if t is not None]
     valid_tracks2 = [t for t in (process_track(track) for track in tracks2) if t is not None]
 
@@ -130,10 +169,21 @@ def calculate_compatibility(tracks1, tracks2):
     set2 = set(valid_tracks2)
     common_tracks = set1.intersection(set2)
 
-    # Сравнение артистов
-    artists1 = set(a.lower() for t in tracks1 if isinstance(t, dict) and 'artists' in t for a in t['artists'] if isinstance(a, str))
-    artists2 = set(a.lower() for t in tracks2 if isinstance(t, dict) and 'artists' in t for a in t['artists'] if isinstance(a, str))
-    common_artists = artists1.intersection(artists2)
+    # Формируем список общих треков и одновременно собираем статистику по исполнителям
+    formatted_common_tracks = []
+    artist_counts = {}
+
+    for title, artists in common_tracks:
+        track_string = f"{' & '.join(artists)} - {title}"
+        formatted_common_tracks.append(track_string)
+        
+        # Подсчитываем исполнителей сразу при обработке общих треков
+        for artist in artists:
+            artist = artist.lower().strip()
+            artist_counts[artist] = artist_counts.get(artist, 0) + 1
+
+    # Сортируем исполнителей по количеству появлений
+    top_artists = sorted(artist_counts.items(), key=lambda x: (-x[1], x[0]))[:5]
 
     # Процент совместимости
     total_unique_tracks = len(set1.union(set2))
@@ -141,14 +191,23 @@ def calculate_compatibility(tracks1, tracks2):
 
     return {
         "percentage": percent,
-        "common_tracks": [f"{' & '.join(a)} - {t}" for t, a in common_tracks],
+        "common_tracks": formatted_common_tracks,
         "common_tracks_count": len(common_tracks),
-        "common_artists": sorted(list(common_artists)),
-        "common_artists_count": len(common_artists)
+        "common_artists": [artist for artist, _ in top_artists],
+        "common_artists_count": len(top_artists),
+        "artist_frequencies": {artist: count for artist, count in top_artists}
     }
 
 # --- API Route ---
 app = Flask(__name__)
+
+def detect_platform(url):
+    if "spotify" in url:
+        return "spotify"
+    elif "yandex" in url:
+        return "yandex"
+    else:
+        return "unknown"
 
 @app.route('/')
 def index():
@@ -184,14 +243,6 @@ def compare():
         logging.warning("Один из URL не передан.")
         return jsonify({'error': 'Не переданы оба URL плейлистов'}), 400
 
-    def detect_platform(url):
-        if "spotify" in url:
-            return "spotify"
-        elif "yandex" in url:
-            return "yandex"
-        else:
-            return "unknown"
-
     try:
         platform1 = detect_platform(playlist1_url)
         platform2 = detect_platform(playlist2_url)
@@ -221,6 +272,10 @@ def compare():
         logging.info(f"Получено треков: playlist1 = {len(tracks1)}, playlist2 = {len(tracks2)}")
 
         result = calculate_compatibility(tracks1, tracks2)
+        
+        # Сохраняем результат в кэш
+        cache_key = f"{playlist1_url}:{playlist2_url}"
+        comparison_cache[cache_key] = result
 
         logging.debug(f"Результат сравнения: {result}")
 
@@ -235,12 +290,50 @@ def compare():
                 for item in result.get('common_tracks', [])
             ],
             'common_artists_count': result.get('common_artists_count', 0),
-            'common_artists_details': result.get('common_artists', [])
+            'common_artists_details': result.get('common_artists', []),
+            'top_tracks': result.get('common_tracks', [])[:5],  # Send full track strings
+            'top_artists': result.get('common_artists', [])[:5]
         })
 
     except Exception as e:
         logging.exception("Ошибка при сравнении плейлистов")
         return jsonify({'error': f'Ошибка при сравнении: {str(e)}'}), 500
+
+@app.route('/api/share-image', methods=['POST'])
+def share_image():
+    data = request.get_json()
+    logging.debug(f"Received data in share-image: {data}")
+    
+    name1 = data.get("name1")
+    name2 = data.get("name2")
+    percentage = data.get("percentage")
+    playlist1_url = data.get("playlist1_url")
+    playlist2_url = data.get("playlist2_url")
+    
+    if not all([name1, name2, percentage is not None, playlist1_url, playlist2_url]):
+        return jsonify({"error": "Недостаточно данных"}), 400
+    
+    try:
+        # Используем только кэшированные данные
+        cache_key = f"{playlist1_url}:{playlist2_url}"
+        cached_result = comparison_cache.get(cache_key)
+        
+        if not cached_result:
+            return jsonify({"error": "Данные сравнения не найдены. Пожалуйста, сначала выполните сравнение."}), 404
+            
+        formatted_data = {
+            "top_tracks": cached_result.get("common_tracks", [])[:3],
+            "top_artists": cached_result.get("common_artists", [])[:3]
+        }
+
+        logging.debug(f"Using cached data for image generation: {formatted_data}")
+        
+        img_path = generate_image(name1, name2, percentage, formatted_data)
+        return send_file(img_path, mimetype='image/jpeg')
+
+    except Exception as e:
+        logging.exception("Ошибка при генерации изображения")
+        return jsonify({'error': f'Ошибка при генерации изображения: {str(e)}'}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
