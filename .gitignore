@@ -1,0 +1,29 @@
+# 📁 Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+*.egg
+*.egg-info/
+dist/
+build/
+venv/
+.env
+
+# 📁 Flask & Gunicorn
+instance/
+*.log
+*.db
+*.sqlite3
+*.pid
+*.sock
+
+# 📁 VS Code / IDE
+.vscode/
+.idea/
+*.swp
+
+# 📁 OS
+.DS_Store
+Thumbs.db

@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Сравнение плейлистов</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #e8f0fe;
+            color: #222;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.15);
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 {
+            color: #1a73e8;
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            text-align: left;
+        }
+
+        input[type="url"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            background-color: #f9f9f9;
+        }
+
+        button {
+            background-color: #1db954;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background-color: #1aa34a;
+        }
+
+        #results {
+            margin-top: 25px;
+            padding: 20px;
+            border: 1px solid #bbb;
+            border-radius: 6px;
+            background-color: #f0f9ff;
+            text-align: left;
+        }
+
+        #results h2 {
+            margin-top: 0;
+            color: #1a73e8;
+        }
+
+        .loader {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #1db954;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+            display: none;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            color: #d93025;
+            font-weight: bold;
+            margin-top: 15px;
+        }
+
+        .track-list {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .track-list li {
+            padding: 5px 0;
+            border-bottom: 1px dashed #bbb;
+        }
+
+        .track-list li:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Анализатор совместимости плейлистов</h1>
+
+        <form onsubmit="comparePlaylists(); return false;" style="display: flex; flex-direction: column; align-items: center;">
+            <label for="playlist1">Ссылка на плейлист(Spotify/Yandex Music):</label>
+            <input type="url" id="playlist1" name="playlist1" placeholder="https://open.spotify.com/playlist/...">
+
+            <label for="playlist2">Ссылка на плейлист(Spotify/Yandex Music):</label>
+            <input type="url" id="playlist2" name="playlist2" placeholder="https://open.spotify.com/playlist/...">
+
+            <button type="submit">Сравнить</button>
+        </form>
+
+        <div class="loader" id="loader"></div>
+        <div id="results"></div>
+    </div>
+
+    <script>
+        async function comparePlaylists() {
+            const playlist1Url = document.getElementById('playlist1').value;
+            const playlist2Url = document.getElementById('playlist2').value;
+            const resultsDiv = document.getElementById('results');
+            const loader = document.getElementById('loader');
+
+            resultsDiv.innerHTML = ''; // Очистить предыдущие результаты
+            
+            if (!playlist1Url || !playlist2Url) {
+                resultsDiv.innerHTML = '<p class="error">Пожалуйста, введите URL обоих плейлистов.</p>';
+                return;
+            }
+
+            loader.style.display = 'block'; // Показать индикатор загрузки
+
+            try {
+                const response = await fetch('/api/compare', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        playlist1_url: playlist1Url,
+                        playlist2_url: playlist2Url,
+                    }),
+                });
+
+                loader.style.display = 'none'; // Скрыть индикатор загрузки
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    resultsDiv.innerHTML = `<p class="error">Ошибка: ${errorData.error || response.statusText}</p>`;
+                    return;
+                }
+
+                const data = await response.json();
+                
+                if (data.error) {
+                     resultsDiv.innerHTML = `<p class="error">Ошибка: ${data.error}</p>`;
+                     return;
+                }
+
+                let htmlResult = `<h2>Результаты сравнения:</h2>`;
+                htmlResult += `<p><strong>Общая совместимость: ${data.percentage}%</strong></p>`;
+                 if (data.message) {
+                    htmlResult += `<p><em>${data.message}</em></p>`;
+                }
+                htmlResult += `<p>Плейлист 1: ${data.playlist1_track_count} треков. Плейлист 2: ${data.playlist2_track_count} треков.</p>`;
+                htmlResult += `<p>Общих треков: ${data.common_tracks_count}</p>`;
+                
+                if (data.common_tracks_details && data.common_tracks_details.length > 0) {
+                    htmlResult += `<h3>Общие треки:</h3><ul class="track-list">`;
+                    data.common_tracks_details.forEach(track => {
+                        htmlResult += `<li>${track.name} - ${track.artists.join(', ')}</li>`;
+                    });
+                    htmlResult += `</ul>`;
+                }
+
+                htmlResult += `<p>Общих исполнителей: ${data.common_artists_count}</p>`;
+                if (data.common_artists_details && data.common_artists_details.length > 0) {
+                    htmlResult += `<h3>Общие исполнители:</h3><ul class="track-list">`;
+                    data.common_artists_details.forEach(artist => {
+                        htmlResult += `<li>${artist}</li>`;
+                    });
+                    htmlResult += `</ul>`;
+                }
+                resultsDiv.innerHTML = htmlResult;
+
+            } catch (error) {
+                loader.style.display = 'none'; // Скрыть индикатор загрузки
+                resultsDiv.innerHTML = `<p class="error">Сетевая ошибка или проблема с запросом: ${error.message}</p>`;
+                console.error('Fetch error:', error);
+            }
+        }
+    </script>
+</body>
+</html>D
