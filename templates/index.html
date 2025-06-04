@@ -1,350 +1,409 @@
 <!DOCTYPE html>
-<html lang="ru">
-<head>
+<html lang="ru" class="dark"> <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Сравнение плейлистов</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=VT323&display=swap" rel="stylesheet">
+    
     <style>
+        /* Базовые стили */
         body {
-            font-family: 'Segoe UI', sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #e8f0fe;
-            color: #222;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
+            font-family: 'Inter', sans-serif; 
+        }
+        /* Пиксельный шрифт будет управляться через tailwind.config */
+
+        /* CSS переменные для ТЕМНОЙ темы */
+        :root {
+            --color-accent-dark: #F0A500; 
+            --color-background-dark: #1A1A1A;
+            --color-card-bg-dark: #252525;
+            --color-text-main-dark: #E0E0E0;
+            --color-text-muted-dark: #A7A7A4;
+            --color-input-bg-dark: #2D2D2D;
+            --color-input-border-dark: #4A4A4A;
+            --color-border-dark: #3f3f46; /* zinc-700 */
+        }
+        
+        /* Анимации */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes pulse-slow {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.85; transform: scale(1.03); }
         }
 
-        .container {
-            background-color: #ffffff;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.15);
-            max-width: 600px;
-            width: 100%;
-            text-align: center;
+        /* Скрытие стандартного маркера для <details> */
+        details > summary {
+            list-style: none; 
         }
-
-        h1 {
-            color: #1a73e8;
-            margin-bottom: 20px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 600;
-            text-align: left;
-        }
-
-        input[type="url"] {
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 15px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            background-color: #f9f9f9;
-        }
-
-        button {
-            background-color: #1db954;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 16px;
-            margin-top: 10px;
-        }
-
-        button:hover {
-            background-color: #1aa34a;
-        }
-
-        #results {
-            margin-top: 25px;
-            padding: 20px;
-            border: 1px solid #bbb;
-            border-radius: 6px;
-            background-color: #f0f9ff;
-            text-align: left;
-        }
-
-        #results h2 {
-            margin-top: 0;
-            color: #1a73e8;
-        }
-
-        .loader {
-            border: 5px solid #f3f3f3;
-            border-top: 5px solid #1db954;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 20px auto;
-            display: none;
-        }
-
-        @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-            100% {
-                transform: rotate(360deg);
-            }
-        }
-
-        .error {
-            color: #d93025;
-            font-weight: bold;
-            margin-top: 15px;
-        }
-
-        .track-list {
-            list-style: decimal;
-            padding-left: 25px;
-        }
-
-        .track-list li {
-            padding: 5px 0;
-            border-bottom: 1px dashed #bbb;
-        }
-
-        .track-list li:last-child {
-            border-bottom: none;
-        }
-
-        .warning {
-            text-align: justify;
-            text-justify: inter-word;
-            margin-bottom: 15px;
-            font-weight: bold;
-        }
-
-        .collapsible {
-            background-color: #1db954;
-            color: white;
-            cursor: pointer;
-            padding: 10px;
-            width: 100%;
-            border: none;
-            text-align: left;
-            outline: none;
-            font-size: 15px;
-            border-radius: 6px;
-            margin: 5px 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .collapsible:after {
-            content: '+';
-            font-size: 18px;
-            font-weight: bold;
-        }
-
-        .active:after {
-            content: '-';
-        }
-
-        .content {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease-out;
-            background-color: #f9f9f9;
-            border-radius: 0 0 6px 6px;
-        }
-
-        /* Share button styles */
-        #shareButton {
-            background-color: #1a73e8;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 16px;
-            margin-top: 20px;
-        }
-
-        /* Modal styles */
-        #shareModal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background-color: rgba(0, 0, 0, 0.6);
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-        }
-
-        #shareModalContent {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            max-width: 400px;
-            width: 90%;
-            box-sizing: border-box;
-            text-align: left;
-        }
-
-        #shareModalContent label {
-            margin-top: 10px;
-            display: block;
-            font-weight: 600;
-        }
-
-        #shareModalContent input[type="text"] {
-            width: 100%;
-            padding: 8px;
-            margin-top: 5px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-sizing: border-box;
-        }
-
-        #shareModalContent button {
-            margin-top: 15px;
-            padding: 10px 20px;
-            font-size: 16px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-        }
-
-        #shareCreateBtn {
-            background-color: #1a73e8;
-            color: white;
-            margin-right: 10px;
-        }
-
-        #shareCancelBtn {
-            background-color: #ccc;
-            color: black;
-        }
-
-        /* Responsive */
-        @media (max-width: 600px) {
-            .container {
-                max-width: 95%;
-                padding: 15px;
-            }
-
-            h1 {
-                font-size: 1.5rem;
-            }
-
-            button, #shareModalContent button {
-                font-size: 14px;
-                padding: 8px 15px;
-            }
-        }
-
-        /* Modal styles */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgb(0,0,0);
-            background-color: rgba(0,0,0,0.4);
-        }
-
-        .modal-content {
-            background-color: #fefefe;
-            margin: 15% auto;
-            padding: 20px;
-            border: 1px solid #888;
-            width: 80%;
-            max-width: 500px;
-            border-radius: 10px;
-            position: relative;
-        }
-
-        .close {
-            color: #aaa;
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
-        }
-
-        .close:hover,
-        .close:focus {
-            color: black;
-            text-decoration: none;
-            cursor: pointer;
-        }
-
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 600;
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            box-sizing: border-box;
+        details > summary::-webkit-details-marker {
+            display: none; 
         }
     </style>
+    <script>
+        // Конфигурация Tailwind CSS для CDN
+        tailwind.config = {
+            darkMode: 'class', 
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'pixel': ['VT323', 'monospace'], 
+                        'sans': ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        'custom-accent-dark': 'var(--color-accent-dark)',
+                        'custom-background-dark': 'var(--color-background-dark)',
+                        'custom-card-bg-dark': 'var(--color-card-bg-dark)',
+                        'custom-text-main-dark': 'var(--color-text-main-dark)',
+                        'custom-text-muted-dark': 'var(--color-text-muted-dark)',
+                        'custom-input-bg-dark': 'var(--color-input-bg-dark)',
+                        'custom-input-border-dark': 'var(--color-input-border-dark)',
+                        'custom-border-dark': 'var(--color-border-dark)',
+
+                        'zinc-700_60-dark': 'rgba(63, 63, 70, 0.6)', 
+                        'zinc-700_50-dark': 'rgba(63, 63, 70, 0.5)',
+                        'zinc-800_70-dark': 'rgba(39, 39, 42, 0.7)',
+                        'yellow-900_50-dark': 'rgba(113, 63, 18, 0.5)', 
+                        'red-800_30-dark': 'rgba(153, 27, 27, 0.3)',   
+                        'red-900_70-dark': 'rgba(127, 29, 29, 0.7)'    
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0', transform: 'translateY(10px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        'pulse-slow': {
+                            '0%, 100%': { opacity: '1', transform: 'scale(1)' },
+                            '50%': { opacity: '0.85', transform: 'scale(1.03)' },
+                        }
+                    },
+                    animation: {
+                        fadeIn: 'fadeIn 0.5s ease-out forwards',
+                        'pulse-slow': 'pulse-slow 2s infinite ease-in-out',
+                    }
+                }
+            }
+        }
+    </script>
 </head>
-<body>
-    <div class="container">
-        <h1>Анализатор совместимости плейлистов</h1>
-        <p class="warning">Перед использованием убедитесь, что плейлист открыт (не приватный) и пожалуйста ждите ответа, сервер думает долго, но упорно (сайт запущен на тапке)</p>
-        <form onsubmit="comparePlaylists(); return false;" style="display: flex; flex-direction: column; align-items: center;">
-            <label for="playlist1">Ссылка на плейлист (Spotify/Yandex Music):</label>
-            <input type="url" id="playlist1" name="playlist1" placeholder="https://open.spotify.com/playlist/..." />
+<body class="bg-gray-100 dark:bg-custom-background-dark text-gray-800 dark:text-custom-text-main-dark font-sans min-h-screen flex flex-col items-center antialiased transition-colors duration-300">
 
-            <label for="playlist2">Ссылка на плейлист (Spotify/Yandex Music):</label>
-            <input type="url" id="playlist2" name="playlist2" placeholder="https://open.spotify.com/playlist/..." />
+    <div class="container mx-auto p-4 md:p-8 max-w-2xl w-full">
 
-            <button type="submit">Сравнить</button>
+        <header class="text-center my-8 md:my-12">
+            <h1 class="font-pixel text-4xl md:text-5xl lg:text-6xl text-amber-500 dark:text-custom-accent-dark uppercase tracking-wider leading-tight">
+                Анализатор
+                <span class="block sm:inline">Совместимости</span>
+                Плейлистов
+            </h1>
+        </header>
+
+        <div class="bg-yellow-100 dark:bg-yellow-900_50-dark p-3 md:p-4 rounded-lg shadow-md mb-8 border border-yellow-400 dark:border-yellow-600/50">
+            <p class="text-sm text-yellow-700 dark:text-yellow-300 leading-relaxed">
+                <strong class="font-pixel">Внимание:</strong> Перед использованием убедитесь, что плейлист открыт (не приватный). Пожалуйста, ждите ответа, сервер может обрабатывать запрос некоторое время.
+            </p>
+        </div>
+
+        <form id="compareForm" onsubmit="comparePlaylists(); return false;" class="space-y-6 mb-8">
+            <div>
+                <label for="playlist1" class="block font-pixel text-lg mb-2 text-gray-600 dark:text-custom-text-muted-dark">Плейлист 1 (Spotify/Yandex Music):</label>
+                <input type="url" id="playlist1" name="playlist1"
+                       class="w-full p-3 bg-white dark:bg-custom-input-bg-dark text-gray-800 dark:text-custom-text-main-dark border-2 border-gray-300 dark:border-custom-input-border-dark rounded-md focus:ring-2 focus:ring-amber-500 dark:focus:ring-custom-accent-dark focus:border-amber-500 dark:focus:border-custom-accent-dark outline-none transition-all duration-150 placeholder-gray-400 dark:placeholder-zinc-500"
+                       placeholder="https://..." />
+            </div>
+            <div>
+                <label for="playlist2" class="block font-pixel text-lg mb-2 text-gray-600 dark:text-custom-text-muted-dark">Плейлист 2 (Spotify/Yandex Music):</label>
+                <input type="url" id="playlist2" name="playlist2"
+                       class="w-full p-3 bg-white dark:bg-custom-input-bg-dark text-gray-800 dark:text-custom-text-main-dark border-2 border-gray-300 dark:border-custom-input-border-dark rounded-md focus:ring-2 focus:ring-amber-500 dark:focus:ring-custom-accent-dark focus:border-amber-500 dark:focus:border-custom-accent-dark outline-none transition-all duration-150 placeholder-gray-400 dark:placeholder-zinc-500"
+                       placeholder="https://..." />
+            </div>
+            <button type="submit"
+                    class="w-full font-pixel text-xl bg-amber-500 dark:bg-custom-accent-dark text-white dark:text-zinc-900 py-3 px-6 rounded-md hover:bg-amber-600 dark:hover:bg-yellow-500 active:bg-amber-700 dark:active:bg-yellow-600 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-400 dark:focus:ring-yellow-400 focus:ring-offset-2 focus:ring-offset-gray-100 dark:focus:ring-offset-custom-background-dark">
+                Сравнить
+            </button>
         </form>
 
-        <div class="loader" id="loader"></div>
-        <div id="results"></div>
+        <div id="loader" class="hidden my-8 text-center">
+            <div class="inline-block h-12 w-12 animate-spin rounded-full border-4 border-solid border-amber-500 dark:border-custom-accent-dark border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" role="status">
+                <span class="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]">Loading...</span>
+            </div>
+            <p class="font-pixel text-xl text-amber-500 dark:text-custom-accent-dark mt-3">Загрузка...</p>
+        </div>
 
-        <button id="shareButton" onclick="openShareModal()" style="display:none;">Поделиться результатом</button>
+        <div id="results" class="space-y-6"></div>
 
-        <p>Разработчик: <a href="https://github.com/slon-hk">@slon_hk</a></p>
+        <div class="text-center my-8">
+            <button id="shareButton" onclick="openShareModal()"
+                    class="hidden font-pixel text-lg bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white py-3 px-8 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-gray-100 dark:focus:ring-offset-custom-background-dark">
+                Поделиться результатом
+            </button>
+        </div>
+
+        <footer class="text-center mt-12 mb-6 space-y-3">
+            <div>
+                <button id="theme-toggle" type="button" class="text-gray-500 dark:text-custom-text-muted-dark hover:bg-gray-200 dark:hover:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-zinc-600 rounded-lg text-sm p-2.5 transition-colors">
+                    <svg id="theme-toggle-dark-icon" class="hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+                    <svg id="theme-toggle-light-icon" class="hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm-.707 10.607a1 1 0 010-1.414l.707-.707a1 1 0 111.414 1.414l-.707.707a1 1 0 01-1.414 0zM10 18a1 1 0 011-1h-2a1 1 0 011 1zM3 11a1 1 0 100-2H2a1 1 0 100 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+                </button>
+            </div>
+            <p class="text-sm text-gray-500 dark:text-custom-text-muted-dark">
+                Разработчик: <a href="https://github.com/slon-hk" target="_blank" rel="noopener noreferrer" class="font-pixel text-amber-600 dark:text-custom-accent-dark hover:underline">@slon_hk</a>
+            </p>
+            <p class="text-xs text-gray-400 dark:text-zinc-500 mt-1">
+                <a href="http://compare-music.ru" target="_blank" rel="noopener noreferrer" class="hover:underline hover:text-gray-500 dark:hover:text-zinc-400">compare-music.ru</a>
+            </p>
+        </footer>
     </div>
 
-    <!-- Модальное окно для ввода имён -->
-    <div id="shareModal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeShareModal()">&times;</span>
-            <h2>Поделиться результатом</h2>
-            <div class="form-group">
-                <label for="shareName1">Имя первого человека:</label>
-                <input type="text" id="shareName1" required>
+    <div id="shareModal" class="fixed inset-0 bg-black/70 dark:bg-black/80 backdrop-blur-sm items-center justify-center p-4 hidden z-50">
+        <div class="bg-white dark:bg-custom-card-bg-dark p-6 rounded-lg shadow-xl max-w-md w-full animate-fadeIn border border-gray-200 dark:border-custom-border-dark">
+            <div id="nameInputStep">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="font-pixel text-2xl text-amber-500 dark:text-custom-accent-dark">Поделиться результатом</h2>
+                    <button onclick="closeShareModal()" class="text-gray-500 dark:text-custom-text-muted-dark hover:text-gray-700 dark:hover:text-white text-3xl leading-none">&times;</button>
+                </div>
+                <div class="space-y-4">
+                    <div>
+                        <label for="shareName1" class="block font-pixel text-md mb-1 text-gray-600 dark:text-custom-text-muted-dark">Имя первого человека:</label>
+                        <input type="text" id="shareName1" required
+                               class="w-full p-2 bg-gray-50 dark:bg-custom-input-bg-dark text-gray-800 dark:text-custom-text-main-dark border border-gray-300 dark:border-custom-input-border-dark rounded focus:ring-1 focus:ring-amber-500 dark:focus:ring-custom-accent-dark focus:border-amber-500 dark:focus:border-custom-accent-dark outline-none placeholder-gray-400 dark:placeholder-zinc-500">
+                    </div>
+                    <div>
+                        <label for="shareName2" class="block font-pixel text-md mb-1 text-gray-600 dark:text-custom-text-muted-dark">Имя второго человека:</label>
+                        <input type="text" id="shareName2" required
+                               class="w-full p-2 bg-gray-50 dark:bg-custom-input-bg-dark text-gray-800 dark:text-custom-text-main-dark border border-gray-300 dark:border-custom-input-border-dark rounded focus:ring-1 focus:ring-amber-500 dark:focus:ring-custom-accent-dark focus:border-amber-500 dark:focus:border-custom-accent-dark outline-none placeholder-gray-400 dark:placeholder-zinc-500">
+                    </div>
+                    <button id="generatePreviewButton"
+                            class="w-full mt-2 font-pixel text-lg bg-amber-500 dark:bg-custom-accent-dark text-white dark:text-zinc-900 py-2.5 px-4 rounded hover:bg-amber-600 dark:hover:bg-yellow-500 active:bg-amber-700 dark:active:bg-yellow-600 transition-colors">
+                        К предпросмотру
+                    </button>
+                    <button onclick="closeShareModal()" class="w-full mt-2 font-pixel text-sm text-gray-600 dark:text-custom-text-muted-dark hover:bg-gray-200 dark:hover:bg-zinc-700 py-2 px-4 rounded transition-colors">
+                        Отмена
+                    </button>
+                </div>
             </div>
-            <div class="form-group">
-                <label for="shareName2">Имя второго человека:</label>
-                <input type="text" id="shareName2" required>
+
+            <div id="imagePreviewStep" class="hidden">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="font-pixel text-2xl text-amber-500 dark:text-custom-accent-dark">Предпросмотр</h2>
+                    <button onclick="closeShareModal()" class="text-gray-500 dark:text-custom-text-muted-dark hover:text-gray-700 dark:hover:text-white text-3xl leading-none">&times;</button>
+                </div>
+                <div id="previewLoadingIndicator" class="hidden text-center my-4">
+                    <p class="font-pixel text-amber-500 dark:text-custom-accent-dark animate-pulse">Загрузка изображения...</p>
+                </div>
+                <div class="mb-4 text-center max-h-[50vh] overflow-y-auto rounded bg-gray-100 dark:bg-zinc-800_70-dark">
+                    <img id="sharePreviewImage" src="" alt="Предпросмотр изображения" class="max-w-full h-auto mx-auto rounded shadow-md hidden">
+                </div>
+                <div class="space-y-3 hidden" id="previewActions">
+                     <button id="saveImageButton"
+                            class="w-full font-pixel text-lg bg-green-500 hover:bg-green-600 text-white py-2.5 px-4 rounded transition-colors">
+                        Сохранить изображение
+                    </button>
+                    <button id="socialShareButton"
+                            class="w-full font-pixel text-lg bg-blue-500 hover:bg-blue-600 text-white py-2.5 px-4 rounded transition-colors">
+                        Поделиться
+                    </button>
+                    <button id="backToNameInputButton"
+                            class="w-full font-pixel text-sm text-gray-600 dark:text-custom-text-muted-dark hover:bg-gray-200 dark:hover:bg-zinc-700 py-2 px-4 rounded transition-colors">
+                        Назад к вводу имен
+                    </button>
+                </div>
             </div>
-            <button onclick="generateShareImage()">Создать изображение</button>
         </div>
     </div>
 
     <script>
+        let comparisonData = null; 
+        let currentImageBlob = null;
+        let currentImageObjectURL = null;
+        let currentImageFileName = "share_image.jpg";
+
+        const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
+        const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
+        const themeToggleButton = document.getElementById('theme-toggle');
+
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            themeToggleLightIcon.classList.remove('hidden');
+            document.documentElement.classList.add('dark');
+        } else {
+            themeToggleDarkIcon.classList.remove('hidden');
+            document.documentElement.classList.remove('dark');
+        }
+
+        themeToggleButton.addEventListener('click', function() {
+            themeToggleDarkIcon.classList.toggle('hidden');
+            themeToggleLightIcon.classList.toggle('hidden');
+            if (document.documentElement.classList.toggle('dark')) {
+                localStorage.setItem('theme', 'dark');
+            } else {
+                localStorage.setItem('theme', 'light');
+            }
+        });
+        
+        function openShareModal() {
+            const modal = document.getElementById('shareModal');
+            document.getElementById('nameInputStep').classList.remove('hidden');
+            document.getElementById('imagePreviewStep').classList.add('hidden');
+            document.getElementById('sharePreviewImage').src = '';
+            document.getElementById('previewLoadingIndicator').classList.add('hidden');
+            document.getElementById('previewActions').classList.add('hidden');
+            document.getElementById('sharePreviewImage').classList.add('hidden');
+
+
+            const name1Input = document.getElementById('shareName1');
+            const name2Input = document.getElementById('shareName2');
+            const baseInputBorderClasses = "border-gray-300 dark:border-custom-input-border-dark".split(" ");
+            const errorInputBorderClasses = "border-red-500 dark:border-red-500 ring-1 ring-red-500 dark:ring-red-500".split(" ");
+            
+            name1Input.value = ''; // Clear input fields
+            name2Input.value = '';
+
+            name1Input.classList.remove(...errorInputBorderClasses);
+            name1Input.classList.add(...baseInputBorderClasses);
+            name2Input.classList.remove(...errorInputBorderClasses);
+            name2Input.classList.add(...baseInputBorderClasses);
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeShareModal() {
+            const modal = document.getElementById('shareModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            if (currentImageObjectURL) {
+                URL.revokeObjectURL(currentImageObjectURL);
+                currentImageObjectURL = null;
+                currentImageBlob = null;
+            }
+        }
+
+        function switchToPreviewStep() {
+            document.getElementById('nameInputStep').classList.add('hidden');
+            document.getElementById('imagePreviewStep').classList.remove('hidden');
+            document.getElementById('previewLoadingIndicator').classList.remove('hidden');
+            document.getElementById('previewActions').classList.add('hidden'); 
+            document.getElementById('sharePreviewImage').classList.add('hidden'); 
+        }
+
+        function switchToNameInputStep() {
+            document.getElementById('nameInputStep').classList.remove('hidden');
+            document.getElementById('imagePreviewStep').classList.add('hidden');
+            document.getElementById('sharePreviewImage').src = ''; 
+            if (currentImageObjectURL) {
+                URL.revokeObjectURL(currentImageObjectURL); 
+                currentImageObjectURL = null;
+                currentImageBlob = null;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('generatePreviewButton').addEventListener('click', handleGeneratePreview);
+            document.getElementById('saveImageButton').addEventListener('click', handleSaveImage);
+            document.getElementById('socialShareButton').addEventListener('click', handleSocialShare);
+            document.getElementById('backToNameInputButton').addEventListener('click', switchToNameInputStep);
+        });
+
+        async function handleGeneratePreview() {
+            const name1Input = document.getElementById('shareName1');
+            const name2Input = document.getElementById('shareName2');
+            const name1 = name1Input.value.trim();
+            const name2 = name2Input.value.trim();
+            
+            let isValid = true;
+            const baseInputBorderClasses = "border-gray-300 dark:border-custom-input-border-dark".split(" ");
+            const errorInputBorderClasses = "border-red-500 dark:border-red-500 ring-1 ring-red-500 dark:ring-red-500".split(" ");
+
+            if (!name1) {
+                name1Input.classList.remove(...baseInputBorderClasses); name1Input.classList.add(...errorInputBorderClasses); isValid = false;
+            } else {
+                name1Input.classList.remove(...errorInputBorderClasses); name1Input.classList.add(...baseInputBorderClasses);
+            }
+            if (!name2) {
+                name2Input.classList.remove(...baseInputBorderClasses); name2Input.classList.add(...errorInputBorderClasses); isValid = false;
+            } else {
+                name2Input.classList.remove(...errorInputBorderClasses); name2Input.classList.add(...baseInputBorderClasses);
+            }
+
+            if (!isValid) return;
+            
+            if (!comparisonData) {
+                alert('Данные сравнения не найдены. Пожалуйста, сначала выполните сравнение.'); return;
+            }
+            
+            switchToPreviewStep(); 
+            currentImageFileName = `compare_music_${name1}_${name2}.jpg`;
+
+            const shareData = {
+                name1: name1, name2: name2, percentage: comparisonData.percentage,
+                playlist1_url: document.getElementById('playlist1').value, 
+                playlist2_url: document.getElementById('playlist2').value 
+            };
+
+            const previewButton = document.getElementById('generatePreviewButton');
+            const originalBtnText = previewButton.innerHTML;
+            previewButton.innerHTML = '<span class="animate-pulse">Генерация...</span>';
+            previewButton.disabled = true;
+
+            try {
+                const response = await fetch('/api/share-image', { 
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(shareData), 
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json(); throw new Error(errorData.error || 'Ошибка при создании изображения');
+                }
+
+                currentImageBlob = await response.blob();
+                if (currentImageObjectURL) URL.revokeObjectURL(currentImageObjectURL);
+                currentImageObjectURL = URL.createObjectURL(currentImageBlob);
+                
+                const previewImageElement = document.getElementById('sharePreviewImage');
+                previewImageElement.src = currentImageObjectURL;
+                previewImageElement.classList.remove('hidden'); 
+                document.getElementById('previewLoadingIndicator').classList.add('hidden'); 
+                document.getElementById('previewActions').classList.remove('hidden'); 
+            } catch (e) {
+                console.error(e); alert(e.message); switchToNameInputStep(); 
+            } finally {
+                 previewButton.innerHTML = originalBtnText; previewButton.disabled = false;
+            }
+        }
+
+        function handleSaveImage() {
+            if (!currentImageObjectURL || !currentImageBlob) { alert("Изображение для сохранения не найдено."); return; }
+            const link = document.createElement('a');
+            link.href = currentImageObjectURL;
+            link.download = currentImageFileName; 
+            document.body.appendChild(link); link.click(); document.body.removeChild(link);
+        }
+
+        async function handleSocialShare() {
+            if (!currentImageBlob) { alert("Изображение для отправки не найдено."); return; }
+
+            const name1 = document.getElementById('shareName1').value.trim() || "Игрок1";
+            const name2 = document.getElementById('shareName2').value.trim() || "Игрок2";
+            const percentage = comparisonData ? comparisonData.percentage : "??";
+            const shareTitle = `${name1} + ${name2} = ${percentage}% совместимости!`;
+            const shareText = `Смотри, как совместимы наши музыкальные вкусы! Проверено на compare-music.ru`;
+            const fileToShare = new File([currentImageBlob], currentImageFileName, { type: 'image/jpeg' });
+
+            if (navigator.share) {
+                try {
+                    await navigator.share({ title: shareTitle, text: shareText, files: [fileToShare] });
+                } catch (error) {
+                    console.error('Ошибка при отправке:', error);
+                }
+            } else {
+                alert('Web Share API не поддерживается в вашем браузере. Сохраните изображение и поделитесь им вручную.');
+            }
+        }
+        
         async function comparePlaylists() {
             const playlist1Url = document.getElementById('playlist1').value;
             const playlist2Url = document.getElementById('playlist2').value;
@@ -353,160 +412,103 @@
             const shareBtn = document.getElementById('shareButton');
 
             resultsDiv.innerHTML = '';
-            shareBtn.style.display = 'none';
+            shareBtn.classList.add('hidden'); shareBtn.classList.remove('inline-block');
 
             if (!playlist1Url || !playlist2Url) {
-                resultsDiv.innerHTML = '<p class="error">Пожалуйста, введите URL обоих плейлистов.</p>';
+                resultsDiv.innerHTML = `<div class="bg-red-100 dark:bg-red-800_30-dark border border-red-400 dark:border-red-700 text-red-700 dark:text-red-300 p-4 rounded-md animate-fadeIn"><p class="font-pixel text-lg">Ошибка:</p><p>Пожалуйста, введите URL обоих плейлистов.</p></div>`;
                 return;
             }
 
-            loader.style.display = 'block';
+            loader.classList.remove('hidden'); loader.classList.add('flex','flex-col', 'items-center');
 
             try {
-                const response = await fetch('/api/compare', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        playlist1_url: playlist1Url,
-                        playlist2_url: playlist2Url,
-                    }),
+                const response = await fetch('/api/compare', { 
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ playlist1_url: playlist1Url, playlist2_url: playlist2Url }),
                 });
 
-                loader.style.display = 'none';
+                loader.classList.add('hidden'); loader.classList.remove('flex','flex-col', 'items-center');
 
                 if (!response.ok) {
                     const errorData = await response.json();
-                    resultsDiv.innerHTML = `<p class="error">Ошибка: ${errorData.error || response.statusText}</p>`;
+                    resultsDiv.innerHTML = `<div class="bg-red-100 dark:bg-red-800_30-dark border border-red-400 dark:border-red-700 text-red-700 dark:text-red-300 p-4 rounded-md animate-fadeIn"><p class="font-pixel text-lg">Ошибка:</p><p>${errorData.error || response.statusText}</p></div>`;
                     return;
                 }
 
                 const data = await response.json();
-                // Сохраняем данные сравнения глобально
-                window.comparisonData = data;
+                comparisonData = data; 
 
-                let htmlResult = `<h2>Результаты сравнения:</h2>`;
-                htmlResult += `<p><strong>Общая совместимость: ${data.percentage}%</strong></p>`;
-                if (data.message) {
-                    htmlResult += `<p><em>${data.message}</em></p>`;
+                let htmlResult = `<div class="bg-white dark:bg-custom-card-bg-dark p-4 md:p-6 rounded-lg shadow-xl space-y-6 animate-fadeIn border border-gray-200 dark:border-custom-border-dark">`;
+                htmlResult += `<h2 class="font-pixel text-3xl md:text-4xl text-amber-500 dark:text-custom-accent-dark text-center mb-6">Результаты Анализа:</h2>`;
+                htmlResult += `
+                    <div class="bg-gray-50 dark:bg-zinc-800_70-dark p-6 rounded-md border-2 border-amber-500 dark:border-custom-accent-dark shadow-lg text-center">
+                        <p class="font-pixel text-xl text-gray-500 dark:text-custom-text-muted-dark mb-2">Общая совместимость:</p>
+                        <p class="font-pixel text-6xl md:text-7xl text-amber-500 dark:text-custom-accent-dark animate-pulse-slow">${data.percentage}%</p>
+                    </div>`;
+
+                if (data.message && data.percentage === 0) { 
+                    htmlResult += `<p class="text-center text-yellow-700 dark:text-yellow-300 bg-yellow-100 dark:bg-yellow-900_50-dark p-3 rounded-md"><em>${data.message}</em></p>`;
                 }
-                htmlResult += `<p>Плейлист 1: ${data.playlist1_track_count} треков. Плейлист 2: ${data.playlist2_track_count} треков.</p>`;
-                htmlResult += `<p>Общих треков: ${data.common_tracks_count}</p>`;
+
+                htmlResult += `
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-center">
+                        <div class="bg-gray-50 dark:bg-zinc-700_60-dark p-4 rounded-md border border-gray-200 dark:border-zinc-600">
+                            <p class="font-pixel text-gray-500 dark:text-custom-text-muted-dark text-sm sm:text-base">Плейлист 1:</p>
+                            <p class="text-xl sm:text-2xl font-semibold">${data.playlist1_track_count} треков</p>
+                        </div>
+                        <div class="bg-gray-50 dark:bg-zinc-700_60-dark p-4 rounded-md border border-gray-200 dark:border-zinc-600">
+                            <p class="font-pixel text-gray-500 dark:text-custom-text-muted-dark text-sm sm:text-base">Плейлист 2:</p>
+                            <p class="text-xl sm:text-2xl font-semibold">${data.playlist2_track_count} треков</p>
+                        </div>
+                        <div class="bg-gray-50 dark:bg-zinc-700_60-dark p-4 rounded-md border border-gray-200 dark:border-zinc-600">
+                            <p class="font-pixel text-gray-500 dark:text-custom-text-muted-dark text-sm sm:text-base">Общих треков:</p>
+                            <p class="text-xl sm:text-2xl font-semibold">${data.common_tracks_count}</p>
+                        </div>
+                        <div class="bg-gray-50 dark:bg-zinc-700_60-dark p-4 rounded-md border border-gray-200 dark:border-zinc-600">
+                            <p class="font-pixel text-gray-500 dark:text-custom-text-muted-dark text-sm sm:text-base">Общих исполнителей:</p>
+                            <p class="text-xl sm:text-2xl font-semibold">${data.common_artists_count}</p>
+                        </div>
+                    </div>`;
 
                 if (data.common_tracks_details && data.common_tracks_details.length > 0) {
                     htmlResult +=
-                        `<button type="button" class="collapsible">Общие треки (${data.common_tracks_count})</button>` +
-                        `<div class="content" style="padding: 10px;">` +
-                        `<ol type="1" class="track-list">` +
-                        data.common_tracks_details
-                            .map(
-                                (track) =>
-                                    `<li>${track.name} - ${track.artists.join(', ')}</li>`
-                            )
-                            .join('') +
-                        `</ol></div>`;
+                        `<details class="group bg-gray-50 dark:bg-zinc-800_70-dark rounded-lg border border-gray-200 dark:border-custom-border-dark overflow-hidden">
+                        <summary class="font-pixel text-lg md:text-xl text-amber-600 dark:text-custom-accent-dark list-none cursor-pointer p-3 md:p-4 hover:bg-gray-100 dark:hover:bg-zinc-700_50-dark transition-colors flex justify-between items-center">
+                        Общие треки (${data.common_tracks_count}) <span class="text-xl md:text-2xl group-open:rotate-90 transform transition-transform duration-200 text-gray-400 dark:text-custom-text-muted-dark origin-center">+</span>
+                        </summary>
+                        <div class="p-3 md:p-4 border-t border-gray-200 dark:border-custom-border-dark space-y-2 max-h-60 overflow-y-auto"> 
+                        <ol class="list-none space-y-2"> 
+                        ${data.common_tracks_details.map((track, index) =>
+                            `<li class="p-2 bg-gray-100 dark:bg-zinc-700_50-dark rounded-md text-sm flex items-baseline hover:bg-gray-200 dark:hover:bg-zinc-700_60-dark transition-colors">
+                                <span class="font-pixel text-amber-600 dark:text-custom-accent-dark mr-2">${index + 1}.</span>
+                                <div><span class="font-semibold block text-gray-700 dark:text-custom-text-main-dark">${track.name}</span><span class="text-xs text-gray-500 dark:text-custom-text-muted-dark">${track.artists.join(', ')}</span></div>
+                            </li>`
+                        ).join('')}
+                        </ol></div></details>`;
                 }
-
-                htmlResult += `<p>Общих исполнителей: ${data.common_artists_count}</p>`;
 
                 if (data.common_artists_details && data.common_artists_details.length > 0) {
-                    htmlResult +=
-                        `<button type="button" class="collapsible">Общие исполнители (${data.common_artists_count})</button>` +
-                        `<div class="content" style="padding: 10px;">` +
-                        `<ol type="1" class="track-list">` +
-                        data.common_artists_details
-                            .map((artist) => `<li>${artist}</li>`)
-                            .join('') +
-                        `</ol></div>`;
+                     htmlResult +=
+                        `<details class="group bg-gray-50 dark:bg-zinc-800_70-dark rounded-lg border border-gray-200 dark:border-custom-border-dark overflow-hidden">
+                        <summary class="font-pixel text-lg md:text-xl text-amber-600 dark:text-custom-accent-dark list-none cursor-pointer p-3 md:p-4 hover:bg-gray-100 dark:hover:bg-zinc-700_50-dark transition-colors flex justify-between items-center">
+                        Общие исполнители (${data.common_artists_count}) <span class="text-xl md:text-2xl group-open:rotate-90 transform transition-transform duration-200 text-gray-400 dark:text-custom-text-muted-dark origin-center">+</span>
+                        </summary>
+                        <div class="p-3 md:p-4 border-t border-gray-200 dark:border-custom-border-dark space-y-2 max-h-60 overflow-y-auto"> 
+                        <ol class="list-none space-y-2"> 
+                        ${data.common_artists_details.map((artist, index) => 
+                            `<li class="p-2 bg-gray-100 dark:bg-zinc-700_50-dark rounded-md text-sm flex items-baseline hover:bg-gray-200 dark:hover:bg-zinc-700_60-dark transition-colors"><span class="font-pixel text-amber-600 dark:text-custom-accent-dark mr-2">${index + 1}.</span><span class="text-gray-700 dark:text-custom-text-main-dark">${artist}</span></li>`
+                        ).join('')}
+                        </ol></div></details>`;
                 }
-
+                htmlResult += `</div>`; 
                 resultsDiv.innerHTML = htmlResult;
 
-                // Показать кнопку «Поделиться» только если есть результат
-                shareBtn.style.display = 'inline-block';
+                shareBtn.classList.remove('hidden'); shareBtn.classList.add('inline-block');
 
-                // Коллапс для списков
-                resultsDiv.querySelectorAll('.collapsible').forEach((button) => {
-                    button.addEventListener('click', function () {
-                        this.classList.toggle('active');
-                        const content = this.nextElementSibling;
-                        if (content.style.maxHeight) {
-                            content.style.maxHeight = null;
-                        } else {
-                            content.style.maxHeight = content.scrollHeight + 'px';
-                        }
-                    });
-                });
             } catch (error) {
-                loader.style.display = 'none';
-                resultsDiv.innerHTML = `<p class="error">Сетевая ошибка или проблема с запросом: ${error.message}</p>`;
+                loader.classList.add('hidden'); loader.classList.remove('flex','flex-col', 'items-center');
+                resultsDiv.innerHTML = `<div class="bg-red-100 dark:bg-red-900_70-dark border border-red-400 dark:border-red-700 text-red-700 dark:text-red-300 p-4 rounded-md shadow-lg animate-fadeIn"><p class="font-pixel text-lg mb-1">Сетевая ошибка:</p><p>${error.message}</p></div>`;
                 console.error('Fetch error:', error);
-            }
-        }
-
-        function openShareModal() {
-            document.getElementById('shareModal').style.display = 'flex';
-        }
-
-        function closeShareModal() {
-            document.getElementById('shareModal').style.display = 'none';
-        }
-
-        async function generateShareImage() {
-            const name1 = document.getElementById('shareName1').value.trim();
-            const name2 = document.getElementById('shareName2').value.trim();
-            
-            // Получаем процент из сохраненных данных сравнения
-            const percentage = window.comparisonData ? window.comparisonData.percentage : 0;
-            
-            if (!name1 || !name2) {
-                alert('Пожалуйста, введите оба имени.');
-                return;
-            }
-
-            // Get stored comparison data
-            const playlist1Url = document.getElementById('playlist1').value;
-            const playlist2Url = document.getElementById('playlist2').value;
-            
-            if (!window.comparisonData) {
-                alert('Пожалуйста, сначала выполните сравнение плейлистов.');
-                return;
-            }
-            
-            // Store the comparison data when received
-            const shareData = {
-                name1: name1,
-                name2: name2,
-                percentage: percentage,
-                playlist1_url: playlist1Url,
-                playlist2_url: playlist2Url
-            };
-
-            try {
-                const response = await fetch('/api/share-image', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(shareData),
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || 'Ошибка при создании изображения');
-                }
-
-                const blob = await response.blob();
-                const url = URL.createObjectURL(blob);
-
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = `share_${name1}_${name2}.jpg`;
-                link.click();
-
-                closeShareModal();
-            } catch (e) {
-                console.error(e);
-                alert(e.message);
             }
         }
     </script>
